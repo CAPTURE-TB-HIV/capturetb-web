@@ -1,5 +1,3 @@
-import '@testing-library/jest-dom';
-
 // Mock Chart.js
 global.Chart = jest.fn().mockImplementation(() => ({
     destroy: jest.fn(),

@@ -4,8 +4,8 @@
   "description": "Web app for generating TB outpatient visit unit cost estimates",
   "main": "index.html",
   "scripts": {
-    "start": "npx http-server -p 8080 -o",
-    "dev": "npx http-server -p 8080 -o",
+    "start": "npx http-server -p 8080 -o -c -1",
+    "dev": "npx http-server -p 8080 -o -1 ",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage"

@@ -1,251 +1,208 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CaptureTB Unit Cost Calculator</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        .result-card {
-            background-color: #f8f9fa;
-            border-left: 4px solid #007bff;
-        }
-        .uncertainty-info {
-            background-color: #fff3cd;
-            border-left: 4px solid #ffc107;
-        }
-        .loading {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 200px;
-        }
-    </style>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>CaptureTB Unit Cost Calculator</title>
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+	<style>
+		.result-card {
+			background-color: #f8f9fa;
+			border-left: 4px solid #007bff;
+		}
+
+		.uncertainty-info {
+			background-color: #fff3cd;
+			border-left: 4px solid #ffc107;
+		}
+
+		.loading {
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			height: 200px;
+		}
+
+		.recalculating {
+			filter: blur(2px);
+			opacity: 0.6;
+			pointer-events: none;
+			transition: filter 0.2s ease, opacity 0.2s ease;
+		}
+	</style>
 </head>
+
 <body>
-    <div class="container my-5">
-        <div class="row">
-            <div class="col-lg-10 mx-auto">
-                <h1 class="text-center mb-4">TB Unit Cost Calculator</h1>
-                <p class="lead text-center mb-5">
-                    Estimate outpatient treatment costs using the CAPTURE TB model
-              </p>
+	<div class="container my-5">
+		<div class="row">
+			<div class="col-lg-10 mx-auto">
+				<h1 class="text-center mb-4">TB Unit Cost Calculator</h1>
+				<p class="lead text-center mb-5">
+					Estimate outpatient treatment costs using the CAPTURE TB model
+				</p>
 
-                <!-- Loading indicator -->
-                <div id="loading" class="loading">
-                    <div class="text-center">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading posterior samples...</span>
-                        </div>
-                        <p class="mt-3">Loading model data...</p>
-                    </div>
-                </div>
+				<div id="loading" class="loading">
+					<div class="text-center">
+						<div class="spinner-border text-primary" role="status">
+							<span class="visually-hidden">Loading posterior samples...</span>
+						</div>
+						<p class="mt-3">Loading model data...</p>
+					</div>
+				</div>
 
-                <!-- Main application -->
-                <div id="app" style="display: none;">
-                    
-                    <!-- Input form -->
-                    <div class="card mb-4">
-                        <div class="card-header">
-                            <h5 class="mb-0">Facility Characteristics</h5>
-                        </div>
-                        <div class="card-body">
-                            <form id="cost-form">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="building-space" class="form-label">
-                                                Building Space Cost (USD/m²)
-                                            </label>
-                                            <input type="number" class="form-control" id="building-space" 
-                                                   value="2.72" step="0.01" min="0">
-                                            <div class="form-text">Local cost of building space per square meter</div>
-                                        </div>
-                                        
-                                        <div class="mb-3">
-                                            <label for="total-visits" class="form-label">
-                                                Annual Total Visits
-                                            </label>
-                                            <input type="number" class="form-control" id="total-visits" 
-                                                   value="1000" min="1">
-                                            <div class="form-text">Total number of visits per year at facility</div>
-                                        </div>
-                                        
-                                        <div class="mb-3">
-                                            <label for="visits-per-patient" class="form-label">
-                                                Visits per Patient per Day
-                                            </label>
-                                            <input type="number" class="form-control" id="visits-per-patient" 
-                                                   value="0.27" step="0.01" min="0">
-                                            <div class="form-text">Average visits per patient per day</div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="country" class="form-label">Country</label>
-                                            <select class="form-select" id="country">
-                                                <option value="Ethiopia">Ethiopia</option>
-                                                <option value="Georgia">Georgia</option>
-                                                <option value="India">India</option>
-                                                <option value="Kenya">Kenya</option>
-                                                <option value="Philippines">Philippines</option>
-                                                <option value="Unknown">Other Country</option>
-                                            </select>
-                                        </div>
-                                        
-                                        <div class="mb-3">
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" id="secondary">
-                                                <label class="form-check-label" for="secondary">
-                                                    Secondary-level facility
-                                                </label>
-                                            </div>
-                                        </div>
-                                        
-                                        <div class="mb-3">
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" id="urban" checked>
-                                                <label class="form-check-label" for="urban">
-                                                    Urban location
-                                                </label>
-                                            </div>
-                                        </div>
-                                        
-                                        <div class="mb-3">
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" id="public" checked>
-                                                <label class="form-check-label" for="public">
-                                                    Public facility
-                                                </label>
-                                            </div>
-                                        </div>
-                                        
-                                        <div class="mb-3">
-                                            <label for="wtp-threshold" class="form-label">
-                                                Willingness-to-Pay Threshold (USD)
-                                            </label>
-                                            <input type="number" class="form-control" id="wtp-threshold" 
-                                                   value="5.0" step="0.5" min="0">
-                                            <div class="form-text">Cost-effectiveness threshold per visit</div>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div class="text-center">
-                                    <button type="submit" class="btn btn-primary btn-lg">
-                                        Calculate Unit Cost
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
+				<div id="app" style="display: none;">
 
-                    <!-- Results -->
-                    <div id="results" style="display: none;">
-                        
-                        <!-- Cost prediction -->
-                        <div class="card result-card mb-4">
-                            <div class="card-body">
-                                <h5 class="card-title">Predicted Unit Cost</h5>
-                                <div class="row align-items-center">
-                                    <div class="col-md-6">
-                                        <h2 class="text-primary mb-0" id="predicted-cost">$--</h2>
-                                        <small class="text-muted">per outpatient treatment visit</small>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="d-flex justify-content-between">
-                                            <span>95% Credible Interval:</span>
-                                            <span id="credible-interval">$-- - $--</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+					<!-- Input form -->
+					<div class="card mb-4">
+						<div class="card-header">
+							<h5 class="mb-0">Cost predictors</h5>
+						</div>
+						<div class="card-body">
+							<form id="cost-form">
+								<div class="row">
+									<div class="col-md-6">
+										<div class="mb-3">
+											<label for="type" class="form-label">Visit type</label>
+											<select class="form-select" id="type">
+												<option value="op_treatmentvisit">Treatment</option>
+												<option value="op_treatmentvisitLTBI">Treatment (LTBI)</option>
+												<option value="op_treatmentvisitMDR">Treatment (MDR)</option>
+											</select>
+										</div>
+										<div class="mb-3">
+											<label for="building-space" class="form-label">
+												Price of building space (USD/m²)
+											</label>
+											<input type="number" class="form-control" id="building-space" value="2.72" step="0.01" min="0">
+											<div class="form-text">Local price of building space per square meter</div>
+										</div>
 
-                        <!-- Distribution plot -->
-                        <div class="card mb-4">
-                            <div class="card-header">
-                                <h5 class="mb-0">Cost Distribution</h5>
-                            </div>
-                            <div class="card-body">
-                                <canvas id="costChart"></canvas>
-                            </div>
-                        </div>
+										<div class="mb-3">
+											<label for="total-visits" class="form-label">
+												Annual outpatient visits (not just TB)
+											</label>
+											<input type="number" class="form-control" id="total-visits" value="1000" min="1">
+											<div class="form-text">Total number of outpatient visits per year at facility</div>
+										</div>
 
-                        <!-- EVPI plot -->
-                        <div class="card mb-4">
-                            <div class="card-header">
-                                <h5 class="mb-0">Expected Value of Perfect Information</h5>
-                            </div>
-                            <div class="card-body">
-                                <p class="text-muted mb-3">
-                                    Shows how the value of eliminating uncertainty varies with willingness-to-pay threshold.
-                                    Peak occurs when WTP ≈ expected cost.
-                                </p>
-                                <canvas id="evpiChart"></canvas>
-                            </div>
-                        </div>
+										<div class="mb-3">
+											<label for="visits-per-fte" class="form-label">
+												Daily TB outpatient visits per FTE working on TB
+											</label>
+											<input type="number" class="form-control" id="visits-per-fte" value="0.5" step="0.01" min="0">
+											<div class="form-text">Average daily TB outpatient visits per FTE</div>
+										</div>
+									</div>
 
-                        <!-- Uncertainty analysis -->
-                        <div class="card uncertainty-info mb-4">
-                            <div class="card-body">
-                                <h5 class="card-title">
-                                    <i class="fas fa-exclamation-triangle"></i>
-                                    Uncertainty Analysis
-                                </h5>
-                                <div class="row">
-                                    <div class="col-md-4">
-                                        <strong>EVPI at your WTP threshold:</strong>
-                                        <div id="evpi-user-wtp">$-- per visit</div>
-                                        <small class="text-muted">At <span id="wtp-display">$--</span> threshold</small>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <strong>Maximum EVPI:</strong>
-                                        <div id="evpi-max">$-- per visit</div>
-                                        <small class="text-muted">Peak value at WTP ~ expected cost</small>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <strong>EVPI as % of cost:</strong>
-                                        <div id="uncertainty-percent">--%</div>
-                                        <small class="text-muted">At peak EVPI</small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+									<div class="col-md-6">
+										<div class="mb-3">
+											<label for="country" class="form-label">Country</label>
+											<select class="form-select" id="country">
+												<option value="Ethiopia">Ethiopia</option>
+												<option value="Georgia">Georgia</option>
+												<option value="India">India</option>
+												<option value="Kenya">Kenya</option>
+												<option value="Philippines">Philippines</option>
+												<option value="Unknown">Other Country</option>
+											</select>
+										</div>
 
-                        <!-- Scale analysis -->
-                        <div class="card mb-4">
-                            <div class="card-header">
-                                <h5 class="mb-0">Scale Analysis</h5>
-                            </div>
-                            <div class="card-body">
-                                <p>For larger interventions, uncertainty costs scale proportionally:</p>
-                                <div class="row text-center">
-                                    <div class="col-4">
-                                        <strong>100 visits</strong><br>
-                                        <span class="text-primary" id="evpi-100">$--</span> EVPI
-                                    </div>
-                                    <div class="col-4">
-                                        <strong>1,000 visits</strong><br>
-                                        <span class="text-primary" id="evpi-1000">$--</span> EVPI
-                                    </div>
-                                    <div class="col-4">
-                                        <strong>10,000 visits</strong><br>
-                                        <span class="text-primary" id="evpi-10000">$--</span> EVPI
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+										<div class="mb-3">
+											<label for="level" class="form-label">Health system level</label>
+											<select class="form-select" id="level">
+												<option value="other">Non-hospital</option>
+												<option value="primary">Primary hospital</option>
+												<option value="secondary">Secondary hosptial</option>
+												<option value="tertiary">Tertiary hospital</option>
+											</select>
+										</div>
 
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+										<div class="mb-3">
+											<label for="n_services" class="form-label">Number of TB outpatient services provided</label>
+											</label>
+											<input type="number" class="form-control" id="n_services" value="1" step="1" min="1">
+											<div class="form-text">How many distinct TB outpatient visit types are provided at this facility
+											</div>
+										</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="tb-calculator.js"></script>
+										<div class="mb-3">
+											<div class="form-check">
+												<input class="form-check-input" type="checkbox" id="urban" checked>
+												<label class="form-check-label" for="urban">
+													Urban location
+												</label>
+											</div>
+										</div>
+
+										<div class="mb-3">
+											<div class="form-check">
+												<input class="form-check-input" type="checkbox" id="public" checked>
+												<label class="form-check-label" for="public">
+													Publicly owned facility
+												</label>
+											</div>
+										</div>
+									</div>
+								</div>
+
+								<div class="text-center">
+									<button type="submit" class="btn btn-primary btn-lg">
+										Predict Unit Cost
+									</button>
+								</div>
+							</form>
+						</div>
+					</div>
+
+					<!-- Results -->
+					<div id="results" style="display: none;">
+
+						<!-- Cost prediction summary -->
+						<div class="card result-card mb-4">
+							<div class="card-body">
+								<h5 class="card-title">Predicted Unit Cost</h5>
+								<div class="row align-items-center">
+									<div class="col-md-6">
+										<h2 class="text-primary mb-0" id="predicted-cost">$--</h2>
+										<small class="text-muted">per outpatient visit</small>
+									</div>
+									<div class="col-md-6">
+										<div class="mb-2">
+											<div class="d-flex justify-content-between align-items-center">
+												<span id="credible-interval-label">95% Credible Interval:</span>
+												<span id="credible-interval">$-- - $--</span>
+											</div>
+										</div>
+										<div class="d-flex justify-content-end">
+											<select class="form-select form-select-sm" id="confidence-level" style="width: auto;">
+												<option value="95" selected>95% Confidence</option>
+												<option value="90">90% Confidence</option>
+												<option value="80">80% Confidence</option>
+											</select>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<!-- Distribution plot -->
+						<div class="card mb-4">
+							<div class="card-header">
+								<h5 class="mb-0">Cost Distribution</h5>
+							</div>
+							<div class="card-body">
+								<canvas id="costChart"></canvas>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+	<script src="tb-calculator.js?7=8"></script>
 </body>
+
 </html>
