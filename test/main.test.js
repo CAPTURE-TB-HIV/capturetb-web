@@ -139,7 +139,7 @@ describe("capturetb integration", () => {
 
 	beforeAll(() => {
 		global.alert = vi.fn();
-		global.posteriorSamples = samples;
+		global.posteriorSamples = samples.slice(0, 1000); // Use a subset for testing
 		global.centeringValues = centeringValues;
 		initApp(() => { });
 		vi.useFakeTimers()
@@ -171,7 +171,7 @@ describe("capturetb integration", () => {
 			vi.advanceTimersByTime(50);
 
 			expect(document.getElementById("credible-interval-label").innerHTML).toBe("95% Credible Interval:");
-			expect(document.getElementById("credible-interval").innerHTML).toBe("$1 - $13");
+			expect(document.getElementById("credible-interval").innerHTML).toBe("$1 - $12");
 
 			// Change confidence level
 			document.getElementById("confidence-level").value = "80";

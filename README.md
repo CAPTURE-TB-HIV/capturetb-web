@@ -18,7 +18,7 @@ This app uses the [capturetb](https://github.com/CAPTURE-TB-HIV/capturetb) econo
 
 ## Test
 
-Tests use [vitest](https://vitest.dev/).
+Tests use [Vitest](https://vitest.dev/).
 
 ```
 npm test
