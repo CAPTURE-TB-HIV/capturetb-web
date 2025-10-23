@@ -141,7 +141,7 @@ describe("capturetb integration", () => {
 		global.alert = vi.fn();
 		global.posteriorSamples = samples.slice(0, 1000); // Use a subset for testing
 		global.centeringValues = centeringValues;
-		initApp(() => { });
+		initApp(null, () => { });
 		vi.useFakeTimers()
 
 	});

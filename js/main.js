@@ -27,6 +27,8 @@ Chart.register(
 );
 import { prepareInputs, predictUnitCost, summarizePredictions } from './capturetb.js';
 
+window.global ||= window;
+
 global.posteriorSamples = null;
 global.centeringValues = null;
 
@@ -63,11 +65,11 @@ async function loadPosteriorSamples() {
 		const centeringResponse = await fetch('data/centering_values.json');
 		const text = await response.text();
 		global.centeringValues = await centeringResponse.json();
-		global.posteriorSamples = processSamples(text);
+		const samples = processSamples(text);
+		global.posteriorSamples = samples;
 
 		console.log(`Loaded ${samples.length} posterior samples`);
 		console.log('Sample structure:', Object.keys(samples[0]));
-		return samples;
 
 	} catch (error) {
 		console.error('Error loading posterior samples:', error);
@@ -342,16 +344,27 @@ export async function handleFormSubmit(event) {
 	}
 }
 
-export async function initApp(loadPosteriorSamples = loadPosteriorSamples) {
+export async function initApp(event, load) {
 	console.log("DOM ready")
 	try {
 		console.log('Loading samples');
-		await loadPosteriorSamples();
+		console.log(load);
+		if (load) {
+			await load();
+		} else {
+			await loadPosteriorSamples();
+		}
 
 		document.getElementById('loading').style.display = 'none';
 		document.getElementById('app').style.display = 'block';
 
-		document.getElementById('cost-form').addEventListener('submit', handleFormSubmit);
+		const costForm = document.getElementById('cost-form')
+		costForm.addEventListener('submit', handleFormSubmit);
+
+		costForm.addEventListener('input', () => {
+			document.getElementById('results').style.display = 'none';
+		});
+
 		document.getElementById('confidence-level').addEventListener('change', updateResultsDisplay);
 
 		console.log('Application initialized successfully');
