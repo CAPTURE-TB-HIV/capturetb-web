@@ -6,6 +6,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>CaptureTB Unit Cost Predictions</title>
 	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 	<style>
 		.result-card {
 			background-color: #f8f9fa;
@@ -31,15 +32,16 @@
 			transition: filter 0.2s ease, opacity 0.2s ease;
 		}
 	</style>
+  <script type="module" crossorigin src="/assets/index-BmCFLC2g.js"></script>
 </head>
 
 <body>
 	<div class="container my-5">
 		<div class="row">
 			<div class="col-lg-10 mx-auto">
-				<h1 class="text-center mb-4">TB Outpatient Unit Cost Predictions</h1>
+				<h1 class="text-center mb-4">TB Unit Cost Predictions</h1>
 				<p class="lead text-center mb-5">
-					Estimate outpatient visit costs using the CAPTURE TB model
+					Estimate outpatient treatment costs using the CAPTURE TB model
 				</p>
 
 				<div id="loading" class="loading">
@@ -200,7 +202,6 @@
 			</div>
 		</div>
 	</div>
-	<script src="main.js" type="module"></script>
 </body>
 
 </html>

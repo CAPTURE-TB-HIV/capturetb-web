@@ -11,7 +11,7 @@ convert_bracket_to_underscore <- function(x) {
 centering_values <- mod$centering_values()
 write(
   jsonlite::toJSON(centering_values, auto_unbox = TRUE),
-  "centering_values.json"
+  "data/centering_values.json"
 )
 
 output_types <- levels(mod$outputs())
@@ -39,5 +39,40 @@ colnames(sam) <- sapply(colnames(sam), function(nm) {
   }
 })
 
-write.csv(sam, file = "posterior_samples.csv", row.names = FALSE, quote = FALSE)
+write.csv(sam,
+  file = "data/posterior_samples.csv",
+  row.names = FALSE, quote = FALSE
+)
 
+# for testing Js against R
+test_inputs <- data.frame(
+  buildingSpace = 10,
+  totalVisits = 690000,
+  visitsPerFTE = 6,
+  logVisits = log(690000),
+  logVisitsPP_TB = log(6),
+  log_ID_p_bldgspace = log(10),
+  primary = c(TRUE, FALSE, FALSE, FALSE),
+  secondary = c(FALSE, TRUE, FALSE, FALSE),
+  tertiary = c(FALSE, FALSE, TRUE, FALSE),
+  urban = c(FALSE, TRUE),
+  public = c(TRUE, FALSE),
+  n_services = 3,
+  output = c("op_treatmentvisit", "op_diagnosticvisit"),
+  fc_country = c("Ethiopia", "Unknown")
+)
+
+pred <- mod$predict(
+  capturetb::prepare_covariates(test_inputs, mod),
+  scale = "natural",
+  summarised = TRUE
+)
+
+write(
+  jsonlite::toJSON(test_inputs, auto_unbox = TRUE),
+  "test/test_inputs.json"
+)
+write(
+  jsonlite::toJSON(pred, auto_unbox = TRUE),
+  "test/test_results.json"
+)

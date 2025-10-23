@@ -1,0 +1,38 @@
+name: 🔎 Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+env:
+  BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: 🔎 Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
+
+      - name: ⎔ Setup node
+        uses: actions/setup-node@v4
+
+      - name: 📥 Install deps
+        run: npm install --frozen-lockfile
+
+      - name: 🔎 Test
+        run: npm run test:coverage
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          fail_ci_if_error: true
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

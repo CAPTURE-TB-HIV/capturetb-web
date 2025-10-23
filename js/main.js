@@ -1,9 +1,37 @@
-// Global variables
-let posteriorSamples = null;
+import {
+	Chart,
+	LineController,
+	LineElement,
+	PointElement,
+	LinearScale,
+	CategoryScale,
+	Title,
+	Tooltip,
+	Legend,
+	Filler
+} from 'chart.js';
+
+import annotationPlugin from 'chartjs-plugin-annotation';
+
+Chart.register(
+	Filler,
+	LineController,
+	LineElement,
+	PointElement,
+	LinearScale,
+	CategoryScale,
+	Title,
+	Tooltip,
+	Legend,
+	annotationPlugin
+);
+import { prepareInputs, predictUnitCost, summarizePredictions } from './capturetb.js';
+
+global.posteriorSamples = null;
+global.centeringValues = null;
+
 let chartInstance = null;
-let currentPredictions = null;
-let currentInputs = null;
-let centeringValues = null;
+global.currentPredictions = null;
 
 const countries = [
 	'Ethiopia',
@@ -13,27 +41,29 @@ const countries = [
 	'Philippines'
 ];
 
-// Load posterior samples from CSV
+export function processSamples(text) {
+	const lines = text.trim().split('\n');
+	const headers = lines[0].split(',');
+
+	const samples = [];
+	for (let i = 1; i < lines.length; i++) {
+		const values = lines[i].split(',').map(parseFloat);
+		const sample = {};
+		headers.forEach((header, index) => {
+			sample[header] = values[index];
+		});
+		samples.push(sample);
+	}
+	return samples
+}
+
 async function loadPosteriorSamples() {
 	try {
-		const response = await fetch('posterior_samples.csv');
-		const centeringResponse = await fetch('centering_values.json');
+		const response = await fetch('data/posterior_samples.csv');
+		const centeringResponse = await fetch('data/centering_values.json');
 		const text = await response.text();
-
-		centeringValues = await centeringResponse.json();
-
-		const lines = text.trim().split('\n');
-		const headers = lines[0].split(',');
-
-		const samples = [];
-		for (let i = 1; i < lines.length; i++) {
-			const values = lines[i].split(',').map(parseFloat);
-			const sample = {};
-			headers.forEach((header, index) => {
-				sample[header] = values[index];
-			});
-			samples.push(sample);
-		}
+		global.centeringValues = await centeringResponse.json();
+		global.posteriorSamples = processSamples(text);
 
 		console.log(`Loaded ${samples.length} posterior samples`);
 		console.log('Sample structure:', Object.keys(samples[0]));
@@ -45,128 +75,11 @@ async function loadPosteriorSamples() {
 	}
 }
 
-function sfc32(a, b, c, d) {
-	return function () {
-		a |= 0; b |= 0; c |= 0; d |= 0;
-		let t = (a + b | 0) + d | 0;
-		d = d + 1 | 0;
-		a = b ^ b >>> 9;
-		b = c + (c << 3) | 0;
-		c = (c << 21 | c >>> 11);
-		c = c + t | 0;
-		return (t >>> 0) / 4294967296;
-	}
-}
-
-// Generate normal random number (Box-Muller transform)
-function normalRandom(mean, sd, rand) {
-	let u = 0, v = 0;
-	while (u === 0) u = rand(); // Converting [0,1) to (0,1)
-	while (v === 0) v = rand();
-	let z = Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
-	return z * sd + mean;
-}
-
-function predictUnitCost(inputs, samples) {
-
-	// to avoid differences due to sigma
-	const seed = 1337 ^ 0xDEADBEEF; // 32-bit seed with optional XOR value
-	// Pad seed with Phi, Pi and E.
-	// https://en.wikipedia.org/wiki/Nothing-up-my-sleeve_number
-	const rand = sfc32(0x9E3779B9, 0x243F6A88, 0xB7E15162, seed);
-	rand()
-
-	const {
-		log_ID_p_bldgspace,
-		logVisits,
-		logVisitsPP_TB,
-		primary,
-		secondary,
-		tertiary,
-		urban,
-		public,
-		country,
-		n_services,
-		visit_type
-	} = inputs;
-
-	const predictions = [];
-	for (let i = 0; i < samples.length; i++) {
-		const sample = samples[i];
-
-		const alpha = sample.alpha;
-
-		// Get country effects
-		let country_effect;
-		if (country in countries) {
-			country_effect = sample[country];
-		} else {
-			// Generate new intercept for unknown country using hyperparameters
-			country_effect = normalRandom(0, sample.sigma_c, rand);
-		}
-
-		// Get visit effects
-		const visit_effect = sample[visit_type];
-
-		// Calculate linear predictor (log scale)
-		const mu = alpha +
-			sample.log_ID_p_bldgspace * log_ID_p_bldgspace +
-			sample.logVisits * logVisits +
-			sample.logVisitsPP_TB * logVisitsPP_TB +
-			sample.primary * (primary ? 1 : 0) +
-			sample.secondary * (secondary ? 1 : 0) +
-			sample.tertiary * (tertiary ? 1 : 0) +
-			sample.primary * (urban ? 1 : 0) +
-			sample.n_services * n_services +
-			sample.tertiary * (public ? 1 : 0);
-
-		const residuals = normalRandom(0, sample.sigma, rand);
-		const logCostPred = mu + country_effect + visit_effect + residuals
-
-		const costPred = Math.exp(logCostPred);
-		predictions.push(costPred);
-	}
-
-	return predictions;
-}
-
-// Calculate summary statistics
-function summarizePredictions(predictions, confidenceLevel = 95) {
-	const sorted = [...predictions].sort((a, b) => a - b);
-	const n = sorted.length;
-
-	// Calculate tail probabilities based on confidence level
-	const alpha = (100 - confidenceLevel) / 100;
-	const lowerTail = alpha / 2;
-	const upperTail = 1 - (alpha / 2);
-
-	return {
-		mean: predictions.reduce((a, b) => a + b, 0) / n,
-		lower: sorted[Math.floor(n * lowerTail)],
-		upper: sorted[Math.floor(n * upperTail)],
-		samples: predictions
-	};
-}
-
-// Calculate EVPI
-function calculateEVPI(costSamples, lambda) {
-	const expectedLossUncertainty = costSamples
-		.map(c => Math.max(0, c - lambda))
-		.reduce((a, b) => a + b, 0) / costSamples.length;
-
-	const meanCost = costSamples.reduce((a, b) => a + b, 0) / costSamples.length;
-	const expectedLossCertainty = Math.max(0, meanCost - lambda);
-
-	return expectedLossUncertainty - expectedLossCertainty;
-}
-
-// Gaussian kernel for density estimation
 function gaussianKernel(x, xi, bandwidth) {
 	const z = (x - xi) / bandwidth;
 	return Math.exp(-0.5 * z * z) / (bandwidth * Math.sqrt(2 * Math.PI));
 }
 
-// Estimate probability density using kernel density estimation
 function estimateDensity(samples, points, bandwidth = null) {
 	if (!bandwidth) {
 		// Silverman's rule of thumb for bandwidth
@@ -185,11 +98,9 @@ function estimateDensity(samples, points, bandwidth = null) {
 	});
 }
 
-// Create smooth density chart
 function createCostChart(costSamples, meanCost, lowerCI, upperCI, confidenceLevel = 95) {
 	const ctx = document.getElementById('costChart').getContext('2d');
 
-	// Destroy existing chart
 	if (chartInstance) {
 		chartInstance.destroy();
 	}
@@ -201,17 +112,14 @@ function createCostChart(costSamples, meanCost, lowerCI, upperCI, confidenceLeve
 	const numPoints = 200;
 
 	const xPoints = [];
-	const densityPoints = [];
 
 	for (let i = 0; i <= numPoints; i++) {
 		const x = minCost - 0.1 * range + (1.2 * range * i) / numPoints;
 		xPoints.push(x);
 	}
 
-	// Estimate density
 	const densities = estimateDensity(costSamples, xPoints);
 
-	// Create datasets
 	const datasets = [{
 		label: 'Probability Density',
 		data: xPoints.map((x, i) => ({ x: x, y: densities[i] })),
@@ -223,7 +131,6 @@ function createCostChart(costSamples, meanCost, lowerCI, upperCI, confidenceLeve
 		borderWidth: 2
 	}];
 
-	// Add confidence interval shading
 	const ciXPoints = xPoints.filter(x => x >= lowerCI && x <= upperCI);
 	const ciDensities = estimateDensity(costSamples, ciXPoints);
 
@@ -266,9 +173,10 @@ function createCostChart(costSamples, meanCost, lowerCI, upperCI, confidenceLeve
 							borderWidth: 2,
 							borderDash: [5, 5],
 							label: {
-								content: `Mean: $${meanCost.toFixed(2)}`,
+								content: `Mean: $${meanCost}`,
 								enabled: true,
-								position: 'top'
+								position: 'end',
+								z: 1000
 							}
 						},
 						lowerCI: {
@@ -280,7 +188,7 @@ function createCostChart(costSamples, meanCost, lowerCI, upperCI, confidenceLeve
 							borderWidth: 1,
 							borderDash: [3, 3],
 							label: {
-								content: `${((100 - confidenceLevel) / 2).toFixed(1)}%: $${lowerCI.toFixed(2)}`,
+								content: `${((100 - confidenceLevel) / 2)}%: $${lowerCI}`,
 								enabled: true,
 								position: 'start'
 							}
@@ -294,7 +202,7 @@ function createCostChart(costSamples, meanCost, lowerCI, upperCI, confidenceLeve
 							borderWidth: 1,
 							borderDash: [3, 3],
 							label: {
-								content: `${(100 - (100 - confidenceLevel) / 2).toFixed(1)}%: $${upperCI.toFixed(2)}`,
+								content: `${(100 - (100 - confidenceLevel) / 2)}%: $${upperCI}`,
 								enabled: true,
 								position: 'end'
 							}
@@ -305,13 +213,14 @@ function createCostChart(costSamples, meanCost, lowerCI, upperCI, confidenceLeve
 			scales: {
 				x: {
 					type: 'linear',
+					min: 0,
 					title: {
 						display: true,
 						text: 'Unit Cost (2018 Int$)'
 					},
 					ticks: {
 						callback: function (value) {
-							return '$' + value.toFixed(2);
+							return '$' + value;
 						}
 					}
 				},
@@ -337,8 +246,8 @@ function createCostChart(costSamples, meanCost, lowerCI, upperCI, confidenceLeve
 }
 
 // Update results display with new confidence level
-function updateResultsDisplay() {
-	if (!currentPredictions) return;
+export function updateResultsDisplay() {
+	if (!global.currentPredictions) return;
 
 	const elementsToBlur = [
 		document.getElementById('credible-interval-label'),
@@ -355,16 +264,16 @@ function updateResultsDisplay() {
 		const confidenceLevel = parseInt(document.getElementById('confidence-level').value);
 
 		// Recalculate summary with new confidence level
-		const summary = summarizePredictions(currentPredictions, confidenceLevel);
+		const summary = summarizePredictions(global.currentPredictions, confidenceLevel);
 
 		// Update cost chart (confidence interval visualization changes)
-		createCostChart(currentPredictions, summary.mean, summary.lower, summary.upper, confidenceLevel);
+		createCostChart(global.currentPredictions, summary.mean, summary.lower, summary.upper, confidenceLevel);
 
 		// Update credible interval display
 		document.getElementById('credible-interval-label').textContent =
 			`${confidenceLevel}% Credible Interval:`;
 		document.getElementById('credible-interval').textContent =
-			'$' + summary.lower.toFixed(2) + ' - $' + summary.upper.toFixed(2);
+			'$' + summary.lower + ' - $' + summary.upper;
 
 		// Remove blur effect
 		elementsToBlur.forEach(element => {
@@ -373,20 +282,19 @@ function updateResultsDisplay() {
 	}, 50); // Small delay to ensure UI updates
 }
 
-async function handleFormSubmit(event) {
+export async function handleFormSubmit(event) {
 	event.preventDefault();
 
-	if (!posteriorSamples | !centeringValues) {
+	if (!global.posteriorSamples | !global.centeringValues) {
 		alert('Posterior samples not loaded yet!');
 		return;
 	}
-
 
 	try {
 
 		const buildingSpace = parseFloat(document.getElementById('building-space').value);
 		const totalVisits = parseInt(document.getElementById('total-visits').value);
-		const visitsPerPatient = parseFloat(document.getElementById('visits-per-fte').value);
+		const visitsPerFTE = parseFloat(document.getElementById('visits-per-fte').value); ``
 		const country = document.getElementById('country').value;
 		const level = document.getElementById('level').value;
 		const visit_type = document.getElementById('type').value;
@@ -394,44 +302,37 @@ async function handleFormSubmit(event) {
 		const primary = level == "primary";
 		const tertiary = level == "tertiary";
 		const urban = document.getElementById('urban').checked;
-		const public = document.getElementById('public').checked;
+		const publicFacility = document.getElementById('public').checked;
 		const n_services = parseInt(document.getElementById('n_services').value);
 
-		// Prepare inputs
-		const inputs = {
-			n_services: n_services - centeringValues.n_services,
-			log_ID_p_bldgspace: Math.log(buildingSpace) - centeringValues.log_ID_p_bldgspace,
-			logVisits: Math.log(totalVisits) - centeringValues.logVisits,
-			logVisitsPP_TB: Math.log(visitsPerPatient) - centeringValues.logVisitsPP_TB,
+		const inputs = prepareInputs({
+			n_services,
+			buildingSpace,
+			totalVisits,
+			visitsPerFTE,
 			primary,
 			secondary,
 			tertiary,
 			urban,
-			public,
+			publicFacility,
 			country,
 			visit_type
-		};
+		}, centeringValues)
 
 		console.log('Prediction inputs:', inputs);
-
-		// Generate predictions (this is the expensive part)
-		currentPredictions = predictUnitCost(inputs, posteriorSamples);
-		currentInputs = inputs;
+		global.currentPredictions = predictUnitCost(inputs, global.posteriorSamples, countries);
 
 		// Get initial confidence level (default 95%)
 		const confidenceLevel = parseInt(document.getElementById('confidence-level').value);
-		const summary = summarizePredictions(currentPredictions, confidenceLevel);
-
-		console.log('Prediction summary:', summary);
+		const summary = summarizePredictions(global.currentPredictions, confidenceLevel);
 
 		// Update main cost display (doesn't change with confidence level)
 		document.getElementById('predicted-cost').textContent =
-			'$' + summary.mean.toFixed(2);
+			'$' + summary.mean;
 
 		// Update confidence-level dependent results display
 		updateResultsDisplay();
 
-		// Show results
 		document.getElementById('results').style.display = 'block';
 		document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
 
@@ -441,21 +342,16 @@ async function handleFormSubmit(event) {
 	}
 }
 
-// Initialize application
-async function initApp() {
-	console.log("domcontect ready")
+export async function initApp(loadPosteriorSamples = loadPosteriorSamples) {
+	console.log("DOM ready")
 	try {
 		console.log('Loading samples');
-		posteriorSamples = await loadPosteriorSamples();
+		await loadPosteriorSamples();
 
-		// Hide loading, show app
 		document.getElementById('loading').style.display = 'none';
 		document.getElementById('app').style.display = 'block';
 
-		// Set up form handler
 		document.getElementById('cost-form').addEventListener('submit', handleFormSubmit);
-
-		// Set up confidence level change handler
 		document.getElementById('confidence-level').addEventListener('change', updateResultsDisplay);
 
 		console.log('Application initialized successfully');
@@ -467,5 +363,4 @@ async function initApp() {
 	}
 }
 
-// Start the application
 document.addEventListener('DOMContentLoaded', initApp);

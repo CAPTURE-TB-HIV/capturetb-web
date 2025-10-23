@@ -3,32 +3,24 @@
   "version": "1.0.0",
   "description": "Web app for generating TB outpatient visit unit cost estimates",
   "main": "index.html",
+  "type": "module",
   "scripts": {
-    "start": "npx http-server -p 8080 -o -c -1",
-    "dev": "npx http-server -p 8080 -o -1 ",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "dev": "vite",
+    "build": "vite build",
+    "test": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "bootstrap": "^5.3.7",
-    "chartjs": "^0.3.24"
+    "bootstrap": "^5.3.7"
   },
   "devDependencies": {
-    "jest": "^29.7.0",
-    "jest-environment-jsdom": "^29.7.0",
-    "@testing-library/jest-dom": "^6.1.5"
-  },
-  "jest": {
-    "testEnvironment": "jsdom",
-    "setupFilesAfterEnv": ["<rootDir>/jest.setup.js"],
-    "testMatch": ["**/__tests__/**/*.test.js", "**/?(*.)+(spec|test).js"],
-    "collectCoverageFrom": [
-      "*.js",
-      "!jest.config.js",
-      "!jest.setup.js"
-    ]
+    "@vitest/coverage-v8": "^4.0.1",
+    "chartjs": "^0.3.24",
+    "chartjs-plugin-annotation": "^3.1.0",
+    "happy-dom": "^20.0.8",
+    "vite": "^7.1.12",
+    "vitest": "^4.0.1"
   }
 }
