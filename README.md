@@ -1,4 +1,4 @@
-# CAPTURETB Web ![Proof of Concept](https://img.shields.io/badge/status-proof%20of%20concept-orange)
+# CAPTURETB Web [![codecov](https://codecov.io/gh/CAPTURE-TB-HIV/capturetb-web/graph/badge.svg?token=LZxkUrw0V3)](https://codecov.io/gh/CAPTURE-TB-HIV/capturetb-web)
 
 A web application for generating TB outpatient unit cost predictions.
 
