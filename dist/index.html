@@ -31,7 +31,7 @@
 			transition: filter 0.2s ease, opacity 0.2s ease;
 		}
 	</style>
-  <script type="module" crossorigin src="/assets/index-DvF0Q1VR.js"></script>
+  <script type="module" crossorigin src="/assets/index-BEdH6CoT.js"></script>
 </head>
 
 <body>
@@ -40,7 +40,7 @@
 			<div class="col-lg-10 mx-auto">
 				<h1 class="text-center mb-4">TB Outpatient Unit Cost Predictions</h1>
 				<p class="lead text-center mb-5">
-					Estimate outpatient visit costs using the CAPTURE TB model
+					Estimate TB outpatient visit costs using the CaptureTB model
 				</p>
 
 				<div id="loading" class="loading">
@@ -67,8 +67,19 @@
 											<label for="type" class="form-label">Visit type</label>
 											<select class="form-select" id="type">
 												<option value="op_treatmentvisit">Treatment</option>
-												<option value="op_treatmentvisitLTBI">Treatment (LTBI)</option>
-												<option value="op_treatmentvisitMDR">Treatment (MDR)</option>
+												<option value="op_treatmentvisit_ltbi">Treatment (LTBI)</option>
+												<option value="op_treatmentvisit_mdr">Treatment (MDR)</option>
+												<option value="op_treatmentvisit_dot">Directly Observed Treatment</option>
+												<option value="op_coughtriage">Cough Triage</option>
+												<option value="op_screeningvisit">Screening</option>
+												<option value="op_screeningvisit_mch">Screening in Maternal & Child Health Unit</option>
+												<option value="op_diagnosticvisit">Diagnostic</option>
+												<option value="op_monitoringvisit">Monitoring</option>
+												<option value="op_adherencesupportvisit">Adherence Support</option>
+												<option value="op_follow-upvisit">Follow-Up</option>
+												<option value="op_visitforinjection">Injection</option>
+												<option value="op_vaccinations">Vaccination</option>
+												<option value="op_visitforcollectingmedicine">Collecting Medicine</option>
 											</select>
 										</div>
 										<div class="mb-3">

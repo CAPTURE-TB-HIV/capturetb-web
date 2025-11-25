@@ -159,7 +159,7 @@ function createCostChart(costSamples, meanCost, lowerCI, upperCI, confidenceLeve
 			plugins: {
 				title: {
 					display: true,
-					text: 'Probability Distribution of Predicted Unit Costs'
+					text: 'Probability Distribution of Predicted Unit Cost'
 				},
 				legend: {
 					display: true
