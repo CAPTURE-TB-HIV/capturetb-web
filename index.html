@@ -80,6 +80,8 @@
 												<option value="op_vaccinations">Vaccination</option>
 												<option value="op_visitforcollectingmedicine">Collecting Medicine</option>
 											</select>
+											<div class="form-text">Visit type is only used for predicting the total unit cost. 
+												Fixed and overhead costs are assumed not to vary by type.</div>
 										</div>
 										<div class="mb-3">
 											<label for="building-space" class="form-label">
@@ -158,8 +160,14 @@
 								</div>
 
 								<div class="text-center">
-									<button type="submit" class="btn btn-primary btn-lg">
+									<button class="btn btn-primary btn-lg" id="submit-total">
 										Predict Unit Cost
+									</button>
+									<button class="btn btn-primary btn-lg" id="submit-fixed">
+										Predict Fixed Unit Cost
+									</button>
+									<button class="btn btn-primary btn-lg" id="submit-overhead">
+										Predict Overhead Unit Cost
 									</button>
 								</div>
 							</form>
@@ -172,7 +180,7 @@
 						<!-- Cost prediction summary -->
 						<div class="card result-card mb-4">
 							<div class="card-body">
-								<h5 class="card-title">Predicted Unit Cost</h5>
+								<h5 class="card-title" id="title">Predicted Unit Cost</h5>
 								<div class="row align-items-center">
 									<div class="col-md-6">
 										<h2 class="text-primary mb-0" id="predicted-cost">$--</h2>

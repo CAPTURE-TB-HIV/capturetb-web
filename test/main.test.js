@@ -5,6 +5,12 @@ import centeringValues from "../data/centering_values.json";
 const samplesCSV = fs.readFileSync(path.join(__dirname, "../data", "posterior_samples.csv"), "utf8");
 const samples = processSamples(samplesCSV);
 
+const samplesCSVFixed = fs.readFileSync(path.join(__dirname, "../data", "posterior_samples_fixed.csv"), "utf8");
+const samplesFixed = processSamples(samplesCSVFixed);
+
+const samplesCSVOhd = fs.readFileSync(path.join(__dirname, "../data", "posterior_samples_ohd.csv"), "utf8");
+const samplesOhd = processSamples(samplesCSVOhd);
+
 document.body.innerHTML = `
 	<div id="loading"></div>
 	<div id="app"></div>
@@ -100,16 +106,22 @@ document.body.innerHTML = `
 			<option value="95" selected>95% Confidence</option>
 			<option value="80">80% Confidence</option>
 		</select>
-		<div class="text-center">
-			<button type="submit" class="btn btn-primary btn-lg">
+	 <div class="text-center">
+			<button class="btn btn-primary btn-lg" id="submit-total">
 				Predict Unit Cost
 			</button>
-		</div>
+			<button class="btn btn-primary btn-lg" id="submit-fixed">
+				Predict Fixed Unit Cost
+			</button>
+			<button class="btn btn-primary btn-lg" id="submit-overhead">
+				Predict Overhead Unit Cost
+			</button>
+	 </div>
 	</form>
 	<div id="predicted-cost"></div>
 							<div class="card result-card mb-4">
 							<div class="card-body">
-								<h5 class="card-title">Predicted Unit Cost</h5>
+								<h5 class="card-title" id="title"></h5>
 								<div class="row align-items-center">
 									<div class="col-md-6">
 										<h2 class="text-primary mb-0" id="predicted-cost">$--</h2>
@@ -140,6 +152,8 @@ describe("capturetb integration", () => {
 	beforeAll(() => {
 		global.alert = vi.fn();
 		global.posteriorSamples = samples.slice(0, 1000); // Use a subset for testing
+		global.posteriorSamplesFixed = samplesFixed.slice(0, 1000); // Use a subset for testing
+		global.posteriorSamplesOhd = samplesOhd.slice(0, 1000); // Use a subset for testing
 		global.centeringValues = centeringValues;
 		initApp(null, () => { });
 		vi.useFakeTimers()
@@ -155,16 +169,35 @@ describe("capturetb integration", () => {
 	describe('Form Handling', () => {
 
 		test("should return predictions", async () => {
-			const form = document.getElementById("cost-form")
-			const evt = new Event("submit", { bubbles: true, cancelable: true })
-			form.dispatchEvent(evt);
+			const btn = document.getElementById("submit-total")
+			const evt = new Event("click", { bubbles: true, cancelable: true })
+			btn.dispatchEvent(evt);
 			expect(document.getElementById("predicted-cost").innerHTML).toBe("$5");
+			expect(document.getElementById("title").innerHTML).toBe("Predicted Cost");
+		});
+
+		test("should return predictions for fixed costs", async () => {
+			const btn = document.getElementById("submit-fixed")
+			const evt = new Event("click", { bubbles: true, cancelable: true })
+			btn.dispatchEvent(evt);
+			vi.advanceTimersByTime(50);
+			expect(document.getElementById("predicted-cost").innerHTML).toBe("$3");
+			expect(document.getElementById("title").innerHTML).toBe("Predicted Fixed Cost");
+		});
+
+		test("should return predictions for overhead costs", async () => {
+			const btn = document.getElementById("submit-overhead")
+			const evt = new Event("click", { bubbles: true, cancelable: true })
+			btn.dispatchEvent(evt);
+			vi.advanceTimersByTime(50);
+			expect(document.getElementById("predicted-cost").innerHTML).toBe("$2");
+			expect(document.getElementById("title").innerHTML).toBe("Predicted Overhead Cost");
 		});
 
 		test("can update confidence level", async () => {
-			const form = document.getElementById("cost-form");
-			const evt = new Event("submit", { bubbles: true, cancelable: true })
-			form.dispatchEvent(evt);
+			const btn = document.getElementById("submit-total")
+			const evt = new Event("click", { bubbles: true, cancelable: true })
+			btn.dispatchEvent(evt);
 
 			expect(document.getElementById("predicted-cost").innerHTML).toBe("$5");
 

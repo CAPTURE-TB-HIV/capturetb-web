@@ -1,6 +1,4 @@
 #!/usr/bin/env Rscript
-library(coda)
-
 mod <- capturetb::unitcost()
 sam <- as.matrix(mod$samples())
 
@@ -75,4 +73,68 @@ write(
 write(
   jsonlite::toJSON(pred, auto_unbox = TRUE),
   "test/test_results.json"
+)
+
+mod_fixed <- capturetb::unitcost_fixed()
+sam_fixed <- as.matrix(mod_fixed$samples())
+
+colnames(sam_fixed) <- convert_bracket_to_underscore(colnames(sam_fixed))
+
+colnames(sam_fixed) <- sapply(colnames(sam_fixed), function(nm) {
+  if (nm %in% names(countries)) {
+    return(countries[[nm]])
+  }
+  if (nm %in% names(covariates)) {
+    return(covariates[[nm]])
+  } else {
+    return(nm)
+  }
+})
+
+write.csv(sam_fixed,
+  file = "data/posterior_samples_fixed.csv",
+  row.names = FALSE, quote = FALSE
+)
+
+pred_fixed <- mod_fixed$predict(
+  capturetb::prepare_covariates(test_inputs, mod_fixed),
+  scale = "natural",
+  summarised = TRUE
+)
+
+write(
+  jsonlite::toJSON(pred_fixed, auto_unbox = TRUE),
+  "test/test_results_fixed.json"
+)
+
+mod_ohd <- capturetb::unitcost_ohd()
+sam_ohd <- as.matrix(mod_ohd$samples())
+
+colnames(sam_ohd) <- convert_bracket_to_underscore(colnames(sam_ohd))
+
+colnames(sam_ohd) <- sapply(colnames(sam_ohd), function(nm) {
+  if (nm %in% names(countries)) {
+    return(countries[[nm]])
+  }
+  if (nm %in% names(covariates)) {
+    return(covariates[[nm]])
+  } else {
+    return(nm)
+  }
+})
+
+write.csv(sam_ohd,
+  file = "data/posterior_samples_ohd.csv",
+  row.names = FALSE, quote = FALSE
+)
+
+pred_ohd <- mod_ohd$predict(
+  capturetb::prepare_covariates(test_inputs, mod_ohd),
+  scale = "natural",
+  summarised = TRUE
+)
+
+write(
+  jsonlite::toJSON(pred_ohd, auto_unbox = TRUE),
+  "test/test_results_ohd.json"
 )

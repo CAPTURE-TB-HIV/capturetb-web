@@ -25,11 +25,13 @@ Chart.register(
 	Legend,
 	annotationPlugin
 );
-import { prepareInputs, predictUnitCost, summarizePredictions } from './capturetb.js';
+import { prepareInputs, predictUnitCost, predictUnitCostFixed, summarizePredictions } from './capturetb.js';
 
 window.global ||= window;
 
 global.posteriorSamples = null;
+global.posteriorSamplesFixed = null;
+global.posteriorSamplesOhd = null;
 global.centeringValues = null;
 
 let chartInstance = null;
@@ -63,10 +65,18 @@ async function loadPosteriorSamples() {
 	try {
 		const response = await fetch('data/posterior_samples.csv');
 		const centeringResponse = await fetch('data/centering_values.json');
+		const responseFixed = await fetch('data/posterior_samples_fixed.csv');
+		const responseOhd = await fetch('data/posterior_samples_ohd.csv');
+
 		const text = await response.text();
+		const textFixed = await responseFixed.text();
+		const textOhd = await responseOhd.text();
+
 		global.centeringValues = await centeringResponse.json();
 		const samples = processSamples(text);
 		global.posteriorSamples = samples;
+		global.posteriorSamplesFixed = processSamples(textFixed);
+		global.posteriorSamplesOhd = processSamples(textOhd);
 
 		console.log(`Loaded ${samples.length} posterior samples`);
 		console.log('Sample structure:', Object.keys(samples[0]));
@@ -100,7 +110,7 @@ function estimateDensity(samples, points, bandwidth = null) {
 	});
 }
 
-function createCostChart(costSamples, meanCost, lowerCI, upperCI, confidenceLevel = 95) {
+function createCostChart(costType, costSamples, meanCost, lowerCI, upperCI, confidenceLevel = 95) {
 	const ctx = document.getElementById('costChart').getContext('2d');
 
 	if (chartInstance) {
@@ -159,7 +169,7 @@ function createCostChart(costSamples, meanCost, lowerCI, upperCI, confidenceLeve
 			plugins: {
 				title: {
 					display: true,
-					text: 'Probability Distribution of Predicted Unit Cost'
+					text: `Probability Distribution of Predicted ${costType} Per Visit`
 				},
 				legend: {
 					display: true
@@ -218,7 +228,7 @@ function createCostChart(costSamples, meanCost, lowerCI, upperCI, confidenceLeve
 					min: 0,
 					title: {
 						display: true,
-						text: 'Unit Cost (2018 Int$)'
+						text: `${costType} Per Visit (2018 Int$)`
 					},
 					ticks: {
 						callback: function (value) {
@@ -248,7 +258,7 @@ function createCostChart(costSamples, meanCost, lowerCI, upperCI, confidenceLeve
 }
 
 // Update results display with new confidence level
-export function updateResultsDisplay() {
+export function updateResultsDisplay(costType) {
 	if (!global.currentPredictions) return;
 
 	const elementsToBlur = [
@@ -269,7 +279,7 @@ export function updateResultsDisplay() {
 		const summary = summarizePredictions(global.currentPredictions, confidenceLevel);
 
 		// Update cost chart (confidence interval visualization changes)
-		createCostChart(global.currentPredictions, summary.mean, summary.lower, summary.upper, confidenceLevel);
+		createCostChart(costType, global.currentPredictions, summary.mean, summary.lower, summary.upper, confidenceLevel);
 
 		// Update credible interval display
 		document.getElementById('credible-interval-label').textContent =
@@ -284,10 +294,27 @@ export function updateResultsDisplay() {
 	}, 50); // Small delay to ensure UI updates
 }
 
-export async function handleFormSubmit(event) {
-	event.preventDefault();
+export async function handleFormSubmit(model) {
+	let samples;
+	let predict;
+	let costType;
 
-	if (!global.posteriorSamples | !global.centeringValues) {
+	if (model == "fixed") {
+		samples = global.posteriorSamplesFixed;
+		predict = predictUnitCostFixed;
+		costType = "Fixed Cost"
+	} else if (model == "ohd") {
+			samples = global.posteriorSamplesOhd;
+		predict = predictUnitCostFixed;
+		costType = "Overhead Cost"
+	} 
+	else {
+		samples = global.posteriorSamples;
+		predict = predictUnitCost;
+		costType = "Cost"
+	}	
+
+	if (!samples | !global.centeringValues) {
 		alert('Posterior samples not loaded yet!');
 		return;
 	}
@@ -322,7 +349,7 @@ export async function handleFormSubmit(event) {
 		}, centeringValues)
 
 		console.log('Prediction inputs:', inputs);
-		global.currentPredictions = predictUnitCost(inputs, global.posteriorSamples, countries);
+		global.currentPredictions = predict(inputs, samples, countries);
 
 		// Get initial confidence level (default 95%)
 		const confidenceLevel = parseInt(document.getElementById('confidence-level').value);
@@ -332,8 +359,10 @@ export async function handleFormSubmit(event) {
 		document.getElementById('predicted-cost').textContent =
 			'$' + summary.mean;
 
+		document.getElementById('title').textContent = `Predicted ${costType}`;
+
 		// Update confidence-level dependent results display
-		updateResultsDisplay();
+		updateResultsDisplay(costType);
 
 		document.getElementById('results').style.display = 'block';
 		document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
@@ -358,8 +387,14 @@ export async function initApp(event, load) {
 		document.getElementById('loading').style.display = 'none';
 		document.getElementById('app').style.display = 'block';
 
-		const costForm = document.getElementById('cost-form')
-		costForm.addEventListener('submit', handleFormSubmit);
+		const costForm = document.getElementById('cost-form');
+		const submitTotal = document.getElementById('submit-total');
+		const submitFixed = document.getElementById('submit-fixed');
+		const submitOverhead = document.getElementById('submit-overhead');
+
+		submitTotal.addEventListener('click', (event) => {event.preventDefault(); handleFormSubmit("total")});
+		submitFixed.addEventListener('click', (event) => {event.preventDefault(); handleFormSubmit("fixed")});
+		submitOverhead.addEventListener('click', (event) => {event.preventDefault(); handleFormSubmit("ohd")})
 
 		costForm.addEventListener('input', () => {
 			document.getElementById('results').style.display = 'none';
