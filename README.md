@@ -1,4 +1,4 @@
-# CAPTURETB Web [![codecov](https://codecov.io/gh/CAPTURE-TB-HIV/capturetb-web/graph/badge.svg?token=LZxkUrw0V3)](https://codecov.io/gh/CAPTURE-TB-HIV/capturetb-web)
+# CaptureTB Web App [![codecov](https://codecov.io/gh/CAPTURE-TB-HIV/capturetb-web/graph/badge.svg?token=LZxkUrw0V3)](https://codecov.io/gh/CAPTURE-TB-HIV/capturetb-web)
 
 A web application for generating TB outpatient unit cost predictions.
 
