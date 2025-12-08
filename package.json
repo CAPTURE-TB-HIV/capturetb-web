@@ -1,6 +1,6 @@
 {
   "name": "capturetb-web",
-  "version": "1.0.0",
+  "version": "1.0.0-beta",
   "description": "Web app for generating TB outpatient visit unit cost estimates",
   "main": "index.html",
   "type": "module",
@@ -13,13 +13,14 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "bootstrap": "^5.3.7"
+    "bootstrap": "^5.3.8"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^4.0.1",
     "chartjs": "^0.3.24",
     "chartjs-plugin-annotation": "^3.1.0",
     "happy-dom": "^20.0.8",
+    "sass-embedded": "^1.93.3",
     "vite": "^7.1.12",
     "vitest": "^4.0.1"
   }

@@ -1,0 +1,27 @@
+$primary: #34657f; 
+
+@import "~bootstrap/scss/bootstrap";
+
+.result-card {
+	background-color: #f8f9fa;
+	border-left: 4px solid #34657f;
+}
+
+.uncertainty-info {
+	background-color: #fff3cd;
+	border-left: 4px solid #ffc107;
+}
+
+.loading {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	height: 200px;
+}
+
+.recalculating {
+	filter: blur(2px);
+	opacity: 0.6;
+	pointer-events: none;
+	transition: filter 0.2s ease, opacity 0.2s ease;
+}

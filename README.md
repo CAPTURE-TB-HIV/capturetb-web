@@ -1,4 +1,4 @@
-# CaptureTB Web App [![codecov](https://codecov.io/gh/CAPTURE-TB-HIV/capturetb-web/graph/badge.svg?token=LZxkUrw0V3)](https://codecov.io/gh/CAPTURE-TB-HIV/capturetb-web)
+# CaptureTB Web App [![🔎 Test](https://github.com/CAPTURE-TB-HIV/capturetb-web/actions/workflows/test.yaml/badge.svg)](https://github.com/CAPTURE-TB-HIV/capturetb-web/actions/workflows/test.yaml) [![codecov](https://codecov.io/gh/CAPTURE-TB-HIV/capturetb-web/graph/badge.svg?token=LZxkUrw0V3)](https://codecov.io/gh/CAPTURE-TB-HIV/capturetb-web) ![GitHub License](https://img.shields.io/github/license/CAPTURE-TB-HIV/capturetb-web) ![GitHub package.json version](https://img.shields.io/github/package-json/v/CAPTURE-TB-HIV/capturetb-web)
 
 A web application for generating TB outpatient unit cost predictions.
 
