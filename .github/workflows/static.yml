@@ -33,6 +33,10 @@ jobs:
         uses: actions/checkout@v4
       - name: Setup Pages
         uses: actions/configure-pages@v5
+      - name: Copy data directory into dist
+        run: |
+          mkdir -p dist
+          cp -R data dist/
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
