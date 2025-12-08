@@ -5,4 +5,5 @@ export default defineConfig({
     environment: 'happy-dom',
     globals: true
   },
+	base: '/capturetb-web/', 
 })
