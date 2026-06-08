@@ -119,9 +119,11 @@
 												<option value="other">Other</option>
 												<option value="healthcentre">Healthcentre</option>
 												<option value="primary">Primary hospital</option>
-												<option value="secondary">Secondary hosptial</option>
+												<option value="secondary">Secondary hospital</option>
 												<option value="tertiary">Tertiary hospital</option>
 											</select>
+											<div class="form-text">Other facilities are those without beds, such as
+												health posts, dispensaries and community health units</div>
 										</div>
 
 										<div class="mb-3">
@@ -138,7 +140,8 @@
 												<option value="public" selected>Public</option>
 												<option value="private">Private</option>
 											</select>
-											<div class="form-text">Privately owned includes non-profits</div>
+											<div class="form-text">Privately owned includes for-profits and non-profits
+											</div>
 										</div>
 									</div>
 								</div>
@@ -151,6 +154,9 @@
 												FTE per
 												day
 											</label>
+											<div class="form-text">These covariates improve predictive performance but
+												may not be readily available in all cases
+											</div>
 										</div>
 									</div>
 								</div>
@@ -182,8 +188,12 @@
 										Predict Unit Cost
 									</button>
 									<button class="btn btn-primary btn-lg" id="submit-fixed">
-										Predict Fixed Unit Cost
+										Predict Fixed Unit Cost*
 									</button>
+
+								</div>
+								<div class="form-text">
+									*where local wage data, drug and supply prices are available, the variable cost components of a visit (clinical staff time, drug and supply costs) can be added to the predicted average fixed cost of a visit
 								</div>
 							</form>
 						</div>

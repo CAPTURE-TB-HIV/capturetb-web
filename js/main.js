@@ -70,7 +70,7 @@ async function loadPosteriorSamples() {
 		const responseFixedExtended = await fetch('data/posterior_samples_fixed_extended.csv');
 
 		const text = await response.text();
-		const textExtended = responseExtended.text();
+		const textExtended = await responseExtended.text();
 		const textFixed = await responseFixed.text();
 		const textFixedExtended = await responseFixedExtended.text();
 
