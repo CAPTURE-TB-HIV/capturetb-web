@@ -8,9 +8,6 @@ const samples = processSamples(samplesCSV);
 const samplesCSVFixed = fs.readFileSync(path.join(__dirname, "../data", "posterior_samples_fixed.csv"), "utf8");
 const samplesFixed = processSamples(samplesCSVFixed);
 
-const samplesCSVOhd = fs.readFileSync(path.join(__dirname, "../data", "posterior_samples_ohd.csv"), "utf8");
-const samplesOhd = processSamples(samplesCSVOhd);
-
 document.body.innerHTML = `
 	<div id="loading"></div>
 	<div id="app"></div>
@@ -68,37 +65,39 @@ document.body.innerHTML = `
 				<div class="mb-3">
 					<label for="level" class="form-label">Health system level</label>
 					<select class="form-select" id="level">
-						<option value="other">Non-hospital</option>
+						<option value="other">Other</option>
+						<option value="healthcentre">Healthcentre</option>
 						<option value="primary">Primary hospital</option>
 						<option value="secondary">Secondary hosptial</option>
 						<option value="tertiary">Tertiary hospital</option>
 					</select>
 				</div>
 
-				<div class="mb-3">
-					<label for="n_services" class="form-label">Number of TB outpatient services provided</label>
+				
+				<div class="form-check">
+					<input class="form-check-input" type="checkbox" value="" id="extended">
+					<label class="form-check-label" for="extended">
+						Include additional covariates: price of building space and TB visits per
+						FTE per
+						day
 					</label>
-					<input type="number" class="form-control" id="n_services" value="1" step="1" min="1">
-					<div class="form-text">How many distinct TB outpatient visit types are provided at this facility
-					</div>
 				</div>
 
 				<div class="mb-3">
-					<div class="form-check">
-						<input class="form-check-input" type="checkbox" id="urban" checked>
-						<label class="form-check-label" for="urban">
-							Urban location
-						</label>
-					</div>
+					<label for="urban" class="form-label">Location</label>
+					<select class="form-select" id="urban">
+						<option value="urban" selected>Urban</option>
+						<option value="rural">Rural</option>
+					</select>
 				</div>
 
 				<div class="mb-3">
-					<div class="form-check">
-						<input class="form-check-input" type="checkbox" id="public" checked>
-						<label class="form-check-label" for="public">
-							Publicly owned facility
-						</label>
-					</div>
+					<label for="public" class="form-label">Ownership</label>
+					<select class="form-select" id="public">
+						<option value="public" selected>Public</option>
+						<option value="private">Private</option>
+					</select>
+					<div class="form-text">Privately owned includes non-profits</div>
 				</div>
 			</div>
 		</div>
@@ -153,7 +152,6 @@ describe("capturetb integration", () => {
 		global.alert = vi.fn();
 		global.posteriorSamples = samples.slice(0, 1000); // Use a subset for testing
 		global.posteriorSamplesFixed = samplesFixed.slice(0, 1000); // Use a subset for testing
-		global.posteriorSamplesOhd = samplesOhd.slice(0, 1000); // Use a subset for testing
 		global.centeringValues = centeringValues;
 		initApp(null, () => { });
 		vi.useFakeTimers()
@@ -172,7 +170,7 @@ describe("capturetb integration", () => {
 			const btn = document.getElementById("submit-total")
 			const evt = new Event("click", { bubbles: true, cancelable: true })
 			btn.dispatchEvent(evt);
-			expect(document.getElementById("predicted-cost").innerHTML).toBe("$5");
+			expect(document.getElementById("predicted-cost").innerHTML).toBe("$7.79");
 			expect(document.getElementById("title").innerHTML).toBe("Predicted Cost");
 		});
 
@@ -181,17 +179,8 @@ describe("capturetb integration", () => {
 			const evt = new Event("click", { bubbles: true, cancelable: true })
 			btn.dispatchEvent(evt);
 			vi.advanceTimersByTime(50);
-			expect(document.getElementById("predicted-cost").innerHTML).toBe("$3");
+			expect(document.getElementById("predicted-cost").innerHTML).toBe("$4.2");
 			expect(document.getElementById("title").innerHTML).toBe("Predicted Fixed Cost");
-		});
-
-		test("should return predictions for overhead costs", async () => {
-			const btn = document.getElementById("submit-overhead")
-			const evt = new Event("click", { bubbles: true, cancelable: true })
-			btn.dispatchEvent(evt);
-			vi.advanceTimersByTime(50);
-			expect(document.getElementById("predicted-cost").innerHTML).toBe("$2");
-			expect(document.getElementById("title").innerHTML).toBe("Predicted Overhead Cost");
 		});
 
 		test("can update confidence level", async () => {
@@ -199,12 +188,12 @@ describe("capturetb integration", () => {
 			const evt = new Event("click", { bubbles: true, cancelable: true })
 			btn.dispatchEvent(evt);
 
-			expect(document.getElementById("predicted-cost").innerHTML).toBe("$5");
+			expect(document.getElementById("predicted-cost").innerHTML).toBe("$7.79");
 
 			vi.advanceTimersByTime(50);
 
 			expect(document.getElementById("credible-interval-label").innerHTML).toBe("95% Credible Interval:");
-			expect(document.getElementById("credible-interval").innerHTML).toBe("$1 - $12");
+			expect(document.getElementById("credible-interval").innerHTML).toBe("$1.78 - $22.15");
 
 			// Change confidence level
 			document.getElementById("confidence-level").value = "80";
@@ -213,7 +202,7 @@ describe("capturetb integration", () => {
 			vi.advanceTimersByTime(50);
 
 			expect(document.getElementById("credible-interval-label").innerHTML).toBe("80% Credible Interval:");
-			expect(document.getElementById("credible-interval").innerHTML).toBe("$2 - $9");
+			expect(document.getElementById("credible-interval").innerHTML).toBe("$2.73 - $14.09");
 		}, 10000);
 
 	});

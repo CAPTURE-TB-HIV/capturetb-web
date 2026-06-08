@@ -32,7 +32,6 @@ window.global ||= window;
 
 global.posteriorSamples = null;
 global.posteriorSamplesFixed = null;
-global.posteriorSamplesOhd = null;
 global.centeringValues = null;
 
 let chartInstance = null;
@@ -66,22 +65,22 @@ async function loadPosteriorSamples() {
 	try {
 		const response = await fetch('data/posterior_samples.csv');
 		const centeringResponse = await fetch('data/centering_values.json');
+		const responseExtended = await fetch('data/posterior_samples_extended.csv');
 		const responseFixed = await fetch('data/posterior_samples_fixed.csv');
-		const responseOhd = await fetch('data/posterior_samples_ohd.csv');
+		const responseFixedExtended = await fetch('data/posterior_samples_fixed_extended.csv');
 
 		const text = await response.text();
+		const textExtended = responseExtended.text();
 		const textFixed = await responseFixed.text();
-		const textOhd = await responseOhd.text();
+		const textFixedExtended = await responseFixedExtended.text();
 
 		global.centeringValues = await centeringResponse.json();
-		const samples = processSamples(text);
-		global.posteriorSamples = samples;
+		global.posteriorSamples = processSamples(text);
 		global.posteriorSamplesFixed = processSamples(textFixed);
-		global.posteriorSamplesOhd = processSamples(textOhd);
+		global.posteriorSamplesExtended = processSamples(textExtended);
+		global.posteriorSamplesFixedExtended = processSamples(textFixedExtended);
 
-		console.log(`Loaded ${samples.length} posterior samples`);
-		console.log('Sample structure:', Object.keys(samples[0]));
-
+		console.log("Loaded posterior samples")
 	} catch (error) {
 		console.error('Error loading posterior samples:', error);
 		throw error;
@@ -258,6 +257,10 @@ function createCostChart(costType, costSamples, meanCost, lowerCI, upperCI, conf
 	});
 }
 
+function roundMoney(value) {
+	return Math.round(value * 100) / 100;
+}
+
 // Update results display with new confidence level
 export function updateResultsDisplay(costType) {
 	if (!global.currentPredictions) return;
@@ -286,7 +289,7 @@ export function updateResultsDisplay(costType) {
 		document.getElementById('credible-interval-label').textContent =
 			`${confidenceLevel}% Credible Interval:`;
 		document.getElementById('credible-interval').textContent =
-			'$' + summary.lower + ' - $' + summary.upper;
+			'$' + roundMoney(summary.lower) + ' - $' + roundMoney(summary.upper);
 
 		// Remove blur effect
 		elementsToBlur.forEach(element => {
@@ -299,21 +302,25 @@ export async function handleFormSubmit(model) {
 	let samples;
 	let predict;
 	let costType;
+	const extended = document.getElementById('extended').checked;
 
 	if (model == "fixed") {
-		samples = global.posteriorSamplesFixed;
+		if (extended) {
+			samples = global.posteriorSamplesFixedExtended;
+		} else {
+			samples = global.posteriorSamplesFixed;
+		}
 		predict = predictUnitCostFixed;
 		costType = "Fixed Cost"
-	} else if (model == "ohd") {
-			samples = global.posteriorSamplesOhd;
-		predict = predictUnitCostFixed;
-		costType = "Overhead Cost"
-	} 
-	else {
-		samples = global.posteriorSamples;
+	} else {
+		if (extended) {
+			samples = global.posteriorSamplesExtended;
+		} else {
+			samples = global.posteriorSamples;
+		}
 		predict = predictUnitCost;
 		costType = "Cost"
-	}	
+	}
 
 	if (!samples | !global.centeringValues) {
 		alert('Posterior samples not loaded yet!');
@@ -330,16 +337,16 @@ export async function handleFormSubmit(model) {
 		const visit_type = document.getElementById('type').value;
 		const secondary = level == "secondary";
 		const primary = level == "primary";
+		const healthcentre = level == "healthcentre";
 		const tertiary = level == "tertiary";
-		const urban = document.getElementById('urban').checked;
-		const publicFacility = document.getElementById('public').checked;
-		const n_services = parseInt(document.getElementById('n_services').value);
+		const urban = document.getElementById('urban').value == "urban";
+		const publicFacility = document.getElementById('public').value == "public";
 
 		const inputs = prepareInputs({
-			n_services,
 			buildingSpace,
 			totalVisits,
 			visitsPerFTE,
+			healthcentre,
 			primary,
 			secondary,
 			tertiary,
@@ -350,7 +357,7 @@ export async function handleFormSubmit(model) {
 		}, centeringValues)
 
 		console.log('Prediction inputs:', inputs);
-		global.currentPredictions = predict(inputs, samples, countries);
+		global.currentPredictions = predict(inputs, samples, countries, extended);
 
 		// Get initial confidence level (default 95%)
 		const confidenceLevel = parseInt(document.getElementById('confidence-level').value);
@@ -358,7 +365,7 @@ export async function handleFormSubmit(model) {
 
 		// Update main cost display (doesn't change with confidence level)
 		document.getElementById('predicted-cost').textContent =
-			'$' + summary.mean;
+			'$' + roundMoney(summary.mean);
 
 		document.getElementById('title').textContent = `Predicted ${costType}`;
 
@@ -374,11 +381,22 @@ export async function handleFormSubmit(model) {
 	}
 }
 
+export function toggleCovariates() {
+	const el = document.getElementById('extended-covariates')
+	const currentval = el.style.display;
+	if (currentval == 'none') {
+		el.style.display = 'flex';
+		el.scrollIntoView({ behavior: 'smooth' });
+	} else {
+		el.style.display = 'none';
+		el.scrollIntoView({ behavior: 'smooth' });
+	}
+}
+
 export async function initApp(event, load) {
 	console.log("DOM ready")
 	try {
 		console.log('Loading samples');
-		console.log(load);
 		if (load) {
 			await load();
 		} else {
@@ -391,17 +409,16 @@ export async function initApp(event, load) {
 		const costForm = document.getElementById('cost-form');
 		const submitTotal = document.getElementById('submit-total');
 		const submitFixed = document.getElementById('submit-fixed');
-		const submitOverhead = document.getElementById('submit-overhead');
 
-		submitTotal.addEventListener('click', (event) => {event.preventDefault(); handleFormSubmit("total")});
-		submitFixed.addEventListener('click', (event) => {event.preventDefault(); handleFormSubmit("fixed")});
-		submitOverhead.addEventListener('click', (event) => {event.preventDefault(); handleFormSubmit("ohd")})
+		submitTotal.addEventListener('click', (event) => { event.preventDefault(); handleFormSubmit("total") });
+		submitFixed.addEventListener('click', (event) => { event.preventDefault(); handleFormSubmit("fixed") });
 
 		costForm.addEventListener('input', () => {
 			document.getElementById('results').style.display = 'none';
 		});
 
 		document.getElementById('confidence-level').addEventListener('change', updateResultsDisplay);
+		document.getElementById('extended').addEventListener('change', toggleCovariates);
 
 		console.log('Application initialized successfully');
 

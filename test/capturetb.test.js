@@ -5,7 +5,6 @@ import centering from "../data/centering_values.json";
 import testInputs from "./test_inputs.json";
 import testResults from "./test_results.json";
 import testResultsFixed from "./test_results_fixed.json";
-import testResultsOhd from "./test_results_ohd.json";
 import { processSamples } from "../js/main.js";
 
 const countries = [
@@ -19,11 +18,14 @@ const countries = [
 const samplesCSV = fs.readFileSync(path.join(__dirname, "../data", "posterior_samples.csv"), "utf8");
 const samples = processSamples(samplesCSV);
 
+const samplesExtendedCSV = fs.readFileSync(path.join(__dirname, "../data", "posterior_samples_extended.csv"), "utf8");
+const samplesExtended = processSamples(samplesExtendedCSV);
+
 const samplesFixedCSV = fs.readFileSync(path.join(__dirname, "../data", "posterior_samples_fixed.csv"), "utf8");
 const samplesFixed = processSamples(samplesFixedCSV);
 
-const samplesOhdCSV = fs.readFileSync(path.join(__dirname, "../data", "posterior_samples_ohd.csv"), "utf8");
-const samplesOhd = processSamples(samplesOhdCSV);
+const samplesFixedExtendedCSV = fs.readFileSync(path.join(__dirname, "../data", "posterior_samples_fixed_extended.csv"), "utf8");
+const samplesFixedExtended = processSamples(samplesFixedExtendedCSV);
 
 describe('capturetb', () => {
 
@@ -36,7 +38,6 @@ describe('capturetb', () => {
 			primary: false,
 			secondary: false,
 			tertiary: false,
-			n_services: 1 - centering.n_services,
 			visit_type: "op_treatmentvisit",
 			urban: true,
 			public: true,
@@ -51,6 +52,14 @@ describe('capturetb', () => {
 
 		test('should return positive cost predictions', () => {
 			const predictions = predictUnitCost(mockInputs, samples, countries);
+			predictions.forEach(pred => {
+				expect(pred).toBeGreaterThan(0);
+				expect(typeof pred).toBe('number');
+			});
+		});
+
+		test('should return positive cost predictions for extended model', () => {
+			const predictions = predictUnitCost(mockInputs, samplesExtended, countries, true);
 			predictions.forEach(pred => {
 				expect(pred).toBeGreaterThan(0);
 				expect(typeof pred).toBe('number');
@@ -93,7 +102,6 @@ describe('capturetb', () => {
 			primary: false,
 			secondary: false,
 			tertiary: false,
-			n_services: 1 - centering.n_services,
 			visit_type: "op_treatmentvisit",
 			urban: true,
 			public: true,
@@ -108,6 +116,14 @@ describe('capturetb', () => {
 
 		test('should return positive cost predictions', () => {
 			const predictions = predictUnitCostFixed(mockInputs, samplesFixed, countries);
+			predictions.forEach(pred => {
+				expect(pred).toBeGreaterThan(0);
+				expect(typeof pred).toBe('number');
+			});
+		});
+
+		test('should return positive cost predictions for extended model', () => {
+			const predictions = predictUnitCostFixed(mockInputs, samplesFixedExtended, countries, true);
 			predictions.forEach(pred => {
 				expect(pred).toBeGreaterThan(0);
 				expect(typeof pred).toBe('number');
@@ -140,62 +156,6 @@ describe('capturetb', () => {
 		});
 	});
 
-	describe('predict overhead costs', () => {
-
-		const mockInputs = {
-			log_ID_p_bldgspace: Math.log(2.72) - centering.log_ID_p_bldgspace,
-			logVisits: Math.log(1000) - centering.logVisits,
-			logVisitsPP_TB: Math.log(2) - centering.logVisitsPP_TB,
-			primary: false,
-			secondary: false,
-			tertiary: false,
-			n_services: 1 - centering.n_services,
-			visit_type: "op_treatmentvisit",
-			urban: true,
-			public: true,
-			country: 'Ethiopia'
-		};
-
-		test('should return predictions array with correct length', () => {
-			const predictions = predictUnitCostFixed(mockInputs, samplesOhd, countries);
-			expect(Array.isArray(predictions)).toBe(true);
-			expect(predictions.length).toBe(samplesOhd.length);
-		});
-
-		test('should return positive cost predictions', () => {
-			const predictions = predictUnitCostFixed(mockInputs, samplesOhd, countries);
-			predictions.forEach(pred => {
-				expect(pred).toBeGreaterThan(0);
-				expect(typeof pred).toBe('number');
-			});
-		});
-
-		test('should handle unknown country', () => {
-			const inputsUnknownCountry = { ...mockInputs, fc_country: 'Unknown' };
-			const predictions = predictUnitCostFixed(inputsUnknownCountry, samplesOhd, countries);
-			expect(predictions.length).toBe(samplesOhd.length);
-			predictions.forEach(pred => {
-				expect(pred).toBeGreaterThan(0);
-			});
-		});
-
-		test("predictions match R package", async () => {
-			for (let i = 0; i < testInputs.length; i++) {
-				const preparedInputs = prepareInputs({
-					...testInputs[i],
-					country: testInputs[i].fc_country,
-					visit_type: testInputs[i].output,
-					publicFacility: testInputs[i].public
-				},
-					centering);
-				const pred = summarizePredictions(predictUnitCostFixed(preparedInputs, samplesOhd, countries));
-				expect(pred.mean).toBeCloseTo(testResultsOhd[i].Mean, 0);
-				expect(pred.lower).toBeCloseTo(testResultsOhd[i].CI_low, 0);
-				expect(pred.upper).toBeCloseTo(testResultsOhd[i].CI_high, 0);
-			}
-		});
-	});
-
 	describe('summarizePredictions', () => {
 		const mockPredictions = [1.0, 2.0, 3.0, 4.0, 5.0];
 
@@ -212,9 +172,9 @@ describe('capturetb', () => {
 			const singlePrediction = [2.75];
 			const summary = summarizePredictions(singlePrediction);
 
-			expect(summary.mean).toBe(3);
-			expect(summary.lower).toBe(3);
-			expect(summary.upper).toBe(3);
+			expect(summary.mean).toBe(2.75);
+			expect(summary.lower).toBe(2.75);
+			expect(summary.upper).toBe(2.75);
 		});
 	});
 });
