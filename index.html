@@ -27,8 +27,8 @@
 				</a>
 				<a href="https://github.com/CAPTURE-TB-HIV/capturetb-web/issues/new"
 					class="text-dark mx-2 p-2 rounded-0 border-dark">
-					<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-flag-fill"
-						viewBox="0 0 16 16">
+					<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+						class="bi bi-flag-fill" viewBox="0 0 16 16">
 						<path
 							d="M14.778.085A.5.5 0 0 1 15 .5V8a.5.5 0 0 1-.314.464L14.5 8l.186.464-.003.001-.006.003-.023.009a12 12 0 0 1-.397.15c-.264.095-.631.223-1.047.35-.816.252-1.879.523-2.71.523-.847 0-1.548-.28-2.158-.525l-.028-.01C7.68 8.71 7.14 8.5 6.5 8.5c-.7 0-1.638.23-2.437.477A20 20 0 0 0 3 9.342V15.5a.5.5 0 0 1-1 0V.5a.5.5 0 0 1 1 0v.282c.226-.079.496-.17.79-.26C4.606.272 5.67 0 6.5 0c.84 0 1.524.277 2.121.519l.043.018C9.286.788 9.828 1 10.5 1c.7 0 1.638-.23 2.437-.477a20 20 0 0 0 1.349-.476l.019-.007.004-.002h.001" />
 					</svg>
@@ -72,47 +72,25 @@
 												<option value="op_treatmentvisit">Treatment</option>
 												<option value="op_treatmentvisit_ltbi">Treatment (LTBI)</option>
 												<option value="op_treatmentvisit_mdr">Treatment (MDR)</option>
-												<option value="op_treatmentvisit_dot">Directly Observed Treatment</option>
+												<option value="op_treatmentvisit_dot">Directly Observed Treatment
+												</option>
 												<option value="op_coughtriage">Cough Triage</option>
 												<option value="op_screeningvisit">Screening</option>
-												<option value="op_screeningvisit_mch">Screening in Maternal & Child Health Unit</option>
+												<option value="op_screeningvisit_mch">Screening in Maternal & Child
+													Health Unit</option>
 												<option value="op_diagnosticvisit">Diagnostic</option>
 												<option value="op_monitoringvisit">Monitoring</option>
 												<option value="op_adherencesupportvisit">Adherence Support</option>
 												<option value="op_follow-upvisit">Follow-Up</option>
 												<option value="op_visitforinjection">Injection</option>
 												<option value="op_vaccinations">Vaccination</option>
-												<option value="op_visitforcollectingmedicine">Collecting Medicine</option>
+												<option value="op_visitforcollectingmedicine">Collecting Medicine
+												</option>
 											</select>
-											<div class="form-text">Visit type is only used for predicting the total unit cost.
-												Fixed and overhead costs are assumed not to vary by type.</div>
+											<div class="form-text">Visit type is only used for predicting the total unit
+												cost.
+												Fixed costs are assumed not to vary by type.</div>
 										</div>
-										<div class="mb-3">
-											<label for="building-space" class="form-label">
-												Price of building space (USD/m²)
-											</label>
-											<input type="number" class="form-control" id="building-space" value="70" step="0.1" min="0">
-											<div class="form-text">Local price of building space per square meter</div>
-										</div>
-
-										<div class="mb-3">
-											<label for="total-visits" class="form-label">
-												Annual outpatient visits (not just TB)
-											</label>
-											<input type="number" class="form-control" id="total-visits" value="40000" min="1">
-											<div class="form-text">Total number of outpatient visits per year at facility</div>
-										</div>
-
-										<div class="mb-3">
-											<label for="visits-per-fte" class="form-label">
-												Daily TB outpatient visits per FTE working on TB
-											</label>
-											<input type="number" class="form-control" id="visits-per-fte" value="4" step="0.1" min="0">
-											<div class="form-text">Average daily TB outpatient visits per FTE</div>
-										</div>
-									</div>
-
-									<div class="col-md-6">
 										<div class="mb-3">
 											<label for="country" class="form-label">Country</label>
 											<select class="form-select" id="country">
@@ -124,55 +102,98 @@
 												<option value="Unknown">Other Country</option>
 											</select>
 										</div>
-
+										<div class="mb-3">
+											<label for="total-visits" class="form-label">
+												Annual outpatient visits (not just TB)
+											</label>
+											<input type="number" class="form-control" id="total-visits" value="40000"
+												min="1">
+											<div class="form-text">Total number of outpatient visits per year at
+												facility</div>
+										</div>
+									</div>
+									<div class="col-md-6">
 										<div class="mb-3">
 											<label for="level" class="form-label">Health system level</label>
 											<select class="form-select" id="level">
-												<option value="other">Non-hospital</option>
+												<option value="other">Other</option>
+												<option value="healthcentre">Healthcentre</option>
 												<option value="primary">Primary hospital</option>
-												<option value="secondary">Secondary hosptial</option>
+												<option value="secondary">Secondary hospital</option>
 												<option value="tertiary">Tertiary hospital</option>
+											</select>
+											<div class="form-text">Other facilities are those without beds, such as
+												health posts, dispensaries and community health units</div>
+										</div>
+
+										<div class="mb-3">
+											<label for="urban" class="form-label">Location</label>
+											<select class="form-select" id="urban">
+												<option value="urban" selected>Urban</option>
+												<option value="rural">Rural</option>
 											</select>
 										</div>
 
 										<div class="mb-3">
-											<label for="n_services" class="form-label">Number of TB outpatient services provided</label>
-											</label>
-											<input type="number" class="form-control" id="n_services" value="1" step="1" min="1">
-											<div class="form-text">How many distinct TB outpatient visit types are provided at this facility
-											</div>
-										</div>
-
-										<div class="mb-3">
-											<div class="form-check">
-												<input class="form-check-input" type="checkbox" id="urban" checked>
-												<label class="form-check-label" for="urban">
-													Urban location
-												</label>
-											</div>
-										</div>
-
-										<div class="mb-3">
-											<div class="form-check">
-												<input class="form-check-input" type="checkbox" id="public" checked>
-												<label class="form-check-label" for="public">
-													Publicly owned facility
-												</label>
+											<label for="public" class="form-label">Ownership</label>
+											<select class="form-select" id="public">
+												<option value="public" selected>Public</option>
+												<option value="private">Private</option>
+											</select>
+											<div class="form-text">Privately owned includes for-profits and non-profits
 											</div>
 										</div>
 									</div>
 								</div>
-
+								<div class="row">
+									<div class="col mb-3">
+										<div class="form-check">
+											<input class="form-check-input" type="checkbox" value="" id="extended">
+											<label class="form-check-label" for="extended">
+												Include additional covariates: price of building space and TB visits per
+												FTE per
+												day
+											</label>
+											<div class="form-text">These covariates improve predictive performance but
+												may not be readily available in all cases
+											</div>
+										</div>
+									</div>
+								</div>
+								<div class="row" id="extended-covariates" style="display: none;">
+									<div class="col-md-6">
+										<div class="mb-3">
+											<label for="building-space" class="form-label">
+												Price of building space (USD/m²)
+											</label>
+											<input type="number" class="form-control" id="building-space" value="70"
+												step="0.1" min="0">
+											<div class="form-text">Local price of building space per square meter
+											</div>
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="mb-3">
+											<label for="visits-per-fte" class="form-label">
+												Daily TB outpatient visits per FTE working on TB
+											</label>
+											<input type="number" class="form-control" id="visits-per-fte" value="4"
+												step="0.1" min="0">
+											<div class="form-text">Average daily TB outpatient visits per FTE</div>
+										</div>
+									</div>
+								</div>
 								<div class="text-center">
 									<button class="btn btn-primary btn-lg" id="submit-total">
 										Predict Unit Cost
 									</button>
 									<button class="btn btn-primary btn-lg" id="submit-fixed">
-										Predict Fixed Unit Cost
+										Predict Fixed Unit Cost*
 									</button>
-									<button class="btn btn-primary btn-lg" id="submit-overhead">
-										Predict Overhead Unit Cost
-									</button>
+
+								</div>
+								<div class="form-text">
+									*where local wage data, drug and supply prices are available, the variable cost components of a visit (clinical staff time, drug and supply costs) can be added to the predicted average fixed cost of a visit
 								</div>
 							</form>
 						</div>
@@ -198,7 +219,8 @@
 											</div>
 										</div>
 										<div class="d-flex justify-content-end">
-											<select class="form-select form-select-sm" id="confidence-level" style="width: auto;">
+											<select class="form-select form-select-sm" id="confidence-level"
+												style="width: auto;">
 												<option value="95" selected>95% Confidence</option>
 												<option value="90">90% Confidence</option>
 												<option value="80">80% Confidence</option>

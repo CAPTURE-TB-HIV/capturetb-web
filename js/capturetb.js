@@ -2,10 +2,10 @@
 import { normalRandom, sfc32 } from './random.js';
 
 export function prepareInputs({
-	n_services,
 	buildingSpace,
 	totalVisits,
 	visitsPerFTE,
+	healthcentre,
 	primary,
 	secondary,
 	tertiary,
@@ -16,10 +16,10 @@ export function prepareInputs({
 }, centeringValues) {
 
 	return {
-		n_services: n_services - centeringValues.n_services,
 		log_ID_p_bldgspace: Math.log(buildingSpace) - centeringValues.log_ID_p_bldgspace,
 		logVisits: Math.log(totalVisits) - centeringValues.logVisits,
 		logVisitsPP_TB: Math.log(visitsPerFTE) - centeringValues.logVisitsPP_TB,
+		healthcentre,
 		primary,
 		secondary,
 		tertiary,
@@ -31,7 +31,7 @@ export function prepareInputs({
 
 }
 
-export function predictUnitCost(inputs, samples, countries) {
+export function predictUnitCost(inputs, samples, countries, extended) {
 
 	// to avoid differences due to sigma
 	const seed = 1337 ^ 0xDEADBEEF; // 32-bit seed with optional XOR value
@@ -44,13 +44,13 @@ export function predictUnitCost(inputs, samples, countries) {
 		log_ID_p_bldgspace,
 		logVisits,
 		logVisitsPP_TB,
+		healthcentre,
 		primary,
 		secondary,
 		tertiary,
 		urban,
 		publicFacility,
 		country,
-		n_services,
 		visit_type
 	} = inputs;
 
@@ -72,17 +72,19 @@ export function predictUnitCost(inputs, samples, countries) {
 		const facility_effect = normalRandom(0, sample.sigma_f, rand);
 
 		// linear predictor (log scale)
-		const mu = alpha +
-			sample.log_ID_p_bldgspace * log_ID_p_bldgspace +
+		let mu = alpha +
 			sample.logVisits * logVisits +
-			sample.logVisitsPP_TB * logVisitsPP_TB +
+			sample.healthcentre * (healthcentre ? 1 : 0) +
 			sample.primary * (primary ? 1 : 0) +
 			sample.secondary * (secondary ? 1 : 0) +
 			sample.tertiary * (tertiary ? 1 : 0) +
 			sample.urban * (urban ? 1 : 0) +
-			sample.n_services * n_services +
 			sample.public * (publicFacility ? 1 : 0);
 
+		if (extended) {
+			mu += sample.log_ID_p_bldgspace * log_ID_p_bldgspace +
+			sample.logVisitsPP_TB * logVisitsPP_TB
+		}
 		const error = normalRandom(0, sample.sigma, rand);
 		const logCostPred = mu + country_effect + visit_effect + facility_effect + error
 
@@ -93,7 +95,7 @@ export function predictUnitCost(inputs, samples, countries) {
 	return predictions;
 }
 
-export function predictUnitCostFixed(inputs, samples, countries) {
+export function predictUnitCostFixed(inputs, samples, countries, extended) {
 
 	// to avoid differences due to sigma
 	const seed = 1337 ^ 0xDEADBEEF; // 32-bit seed with optional XOR value
@@ -106,13 +108,13 @@ export function predictUnitCostFixed(inputs, samples, countries) {
 		log_ID_p_bldgspace,
 		logVisits,
 		logVisitsPP_TB,
+		healthcentre,
 		primary,
 		secondary,
 		tertiary,
 		urban,
 		publicFacility,
 		country,
-		n_services,
 		visit_type
 	} = inputs;
 
@@ -131,17 +133,19 @@ export function predictUnitCostFixed(inputs, samples, countries) {
 		}
 
 		// linear predictor (log scale)
-		const mu = alpha +
-			sample.log_ID_p_bldgspace * log_ID_p_bldgspace +
+		let mu = alpha +
 			sample.logVisits * logVisits +
-			sample.logVisitsPP_TB * logVisitsPP_TB +
+			sample.healthcentre * (healthcentre ? 1 : 0) +
 			sample.primary * (primary ? 1 : 0) +
 			sample.secondary * (secondary ? 1 : 0) +
 			sample.tertiary * (tertiary ? 1 : 0) +
 			sample.urban * (urban ? 1 : 0) +
-			sample.n_services * n_services +
 			sample.public * (publicFacility ? 1 : 0);
 
+		if (extended) {
+			mu += sample.log_ID_p_bldgspace * log_ID_p_bldgspace +
+			sample.logVisitsPP_TB * logVisitsPP_TB
+		}
 		const error = normalRandom(0, sample.sigma, rand);
 		const logCostPred = mu + country_effect + error
 
@@ -160,9 +164,9 @@ export function summarizePredictions(predictions, confidenceLevel = 95) {
 	const lowerTail = alpha / 2;
 	const upperTail = 1 - (alpha / 2);
 	return {
-		mean: Math.round(predictions.reduce((a, b) => a + b, 0) / n),
-		lower: Math.round(sorted[Math.floor(n * lowerTail)]),
-		upper: Math.round(sorted[Math.floor(n * upperTail)]),
+		mean: predictions.reduce((a, b) => a + b, 0) / n,
+		lower: sorted[Math.floor(n * lowerTail)],
+		upper: sorted[Math.floor(n * upperTail)],
 		samples: predictions
 	};
 }
