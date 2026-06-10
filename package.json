@@ -10,8 +10,8 @@
     "test": "vitest",
     "test:coverage": "vitest run --coverage"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Alex Hill",
+  "license": "MIT",
   "dependencies": {
     "bootstrap": "^5.3.8"
   },
