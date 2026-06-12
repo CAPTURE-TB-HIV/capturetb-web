@@ -17,6 +17,7 @@
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^4.0.1",
+    "bootstrap-icons": "^1.13.1",
     "chartjs": "^0.3.24",
     "chartjs-plugin-annotation": "^3.1.0",
     "happy-dom": "^20.0.8",

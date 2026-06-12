@@ -37,6 +37,50 @@
 			</div>
 		</div>
 	</nav>
+	<div
+  class="modal fade"
+  id="infoModal"
+  tabindex="-1"
+  aria-labelledby="model-info"
+  aria-hidden="true"
+>
+  <div class="modal-dialog  modal-dialog-centered">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title" id="model-info">About the model</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+
+      <div class="modal-body">
+        CaptureTB is a multilevel Bayesian model trained on data from ValueTB<sup>1</sup>, a TB unit cost
+		dataset containing outpatient visit costs from 115 facilities in 5 countries. 
+		The model was fit in R using JAGS, and this app makes predictions based on 30,000 posterior samples.
+		For advanced usage, and model details, please see the <a href="https://capture-tb-hiv.github.io/capturetb/">R package vignettes</a>.
+    
+		<div class="mt-3 form-text">
+			1. Sweeney et al. Cost of TB services: Approach and summary findings of a multi-country study (Value TB). The International Journal of Tuberculosis and Lung Disease. 2022;26(11):1006-1015. doi:10.5588/ijtld.22.0096
+		</div>
+	</div>
+
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn btn-primary"
+          data-bs-dismiss="modal"
+        >
+          Close
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
 
 	<div class="container my-5">
 		<div class="row">
@@ -44,6 +88,8 @@
 				<h1 class="text-center mb-4">TB Outpatient Unit Cost Predictions</h1>
 				<p class="lead text-center mb-5">
 					Estimate TB outpatient visit costs using the CaptureTB model
+					<a href="#"  data-bs-toggle="modal"
+  data-bs-target="#infoModal"><span id="wtp-info" class="bi bi-info-circle"></span></a>
 				</p>
 
 				<div id="loading" class="loading">

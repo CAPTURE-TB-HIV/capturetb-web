@@ -13,6 +13,7 @@ import {
 
 import annotationPlugin from 'chartjs-plugin-annotation';
 import '../scss/styles.scss'
+import * as bootstrap from 'bootstrap'
 
 Chart.register(
 	Filler,
